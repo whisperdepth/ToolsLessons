@@ -3,47 +3,67 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const webpack = require("webpack");
 
-module.exports = {
-  entry: "./src/index.js",
-  output: {
-    filename: "bundle.js",
-  },
+module.exports = (env, argv) => {
+  const isProduction = argv.mode === "production";
 
-  module: {
-    rules: [
-      {
-        test: /.js$/,
-        use: ["babel-loader"],
-      },
+  const config = {
+    entry: "./src/index.js",
+    output: {
+      filename: "bundle.js",
+    },
 
-      {
-        test: /.s?css$/,
-        use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"],
-      },
-      {
-        test: /.(jpg|png)$/,
-        use: [
-          {
-            loader: "url-loader",
-            options: {
-              limit: 8192,
-              name: "[name].[.ext]",
-              outputPath: "images",
+    module: {
+      rules: [
+        {
+          test: /.js$/,
+          use: ["babel-loader"],
+        },
+
+        {
+          test: /.s?css$/,
+          use: [
+            isProduction ? MiniCssExtractPlugin.loader : "style-loader",
+            "css-loader",
+            "sass-loader",
+          ],
+        },
+        {
+          test: /.(jpg|png)$/,
+          use: [
+            {
+              loader: "url-loader",
+              options: {
+                limit: 8192,
+                name: "[name].[.ext]",
+                outputPath: "images",
+              },
             },
-          },
-        ],
-      },
-    ],
-  },
+          ],
+        },
+      ],
+    },
 
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: "./src/index.html",
-    }),
-    new MiniCssExtractPlugin({
-      filename: "[name].css",
-    }),
-    new CleanWebpackPlugin(),
-    new webpack.ProgressPlugin(),
-  ],
+    plugins: [
+      new HtmlWebpackPlugin({
+        template: "./src/index.html",
+      }),
+
+      new CleanWebpackPlugin(),
+      new webpack.ProgressPlugin(),
+    ],
+
+    devServer: {
+      hot: true,
+    },
+  };
+
+  if (isProduction) {
+    config.plugins.push(
+      new MiniCssExtractPlugin({
+        filename: "[name].css",
+      })
+    );
+  }
+
+  return config;
 };
